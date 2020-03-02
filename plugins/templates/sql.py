@@ -7,7 +7,7 @@ left join {{ params.hub_name }} h
     on h.{{ params.pk_name }} = ext.{{ params.pk_name }}
 where
       h.{{ params.pk_name }} is null
-    and ext.load_dtm::time > {{ params.from_dtm }};
+    and ext.load_dtm::time > '{{ params.from_dtm }}';
 """
 
 LOAD_LINK_FROM_EXT_TEMP = """

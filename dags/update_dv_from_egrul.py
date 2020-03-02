@@ -50,10 +50,17 @@ hubs_loaded = DummyOperator(
     dag=dag
 )
 
+links_loaded = DummyOperator(
+    task_id='links_loaded',
+    dag=dag
+)
+
 sats_loaded = DummyOperator(
     task_id='sats_loaded',
     dag=dag
 )
+
+start >> hubs_loaded >> links_loaded >> sats_loaded >> end
 
 
 def create_load_hub_from_ext(
@@ -98,8 +105,6 @@ def create_load_sat_from_ext(
     hubs_loaded >> t >> sats_loaded
     return t
 
-
-sats_loaded >> end
 
 map(lambda x: create_load_hub_from_ext(*x), hubs)
 map(lambda x: create_load_sat_from_ext(*x), sats)
