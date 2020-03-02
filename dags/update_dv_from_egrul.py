@@ -104,9 +104,6 @@ sats_loaded >> end
 map(lambda x: create_load_hub_from_ext(*x), hubs)
 map(lambda x: create_load_sat_from_ext(*x), sats)
 
-if __name__ == "__main__":
-    dag.cli()
-
 
 
 

@@ -13,6 +13,7 @@ services:
         volumes:
             - ./postgresql/data:/var/lib/postgresql/data
 
+    reini
     webserver:
         image: puckel/docker-airflow:1.10.9
         restart: always
@@ -36,3 +37,4 @@ services:
             interval: 30s
             timeout: 30s
             retries: 3
+
