@@ -21,6 +21,7 @@ services:
         environment:
             - LOAD_EX=n
             - EXECUTOR=Local
+            - AIRFLOW_CONN_CONFIGURATION=http://configuration-editor.reesrtexp-dev.d.exportcenter.ru
         logging:
             options:
                 max-size: 10m
