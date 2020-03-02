@@ -14,7 +14,7 @@ services:
             - ./postgresql/data:/var/lib/postgresql/data
 
     webserver:
-        image: .
+        build: .
         restart: always
         depends_on:
             - postgres
