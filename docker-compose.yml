@@ -13,9 +13,8 @@ services:
         volumes:
             - ./postgresql/data:/var/lib/postgresql/data
 
-    reini
     webserver:
-        image: puckel/docker-airflow:1.10.9
+        image: .
         restart: always
         depends_on:
             - postgres
