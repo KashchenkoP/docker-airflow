@@ -28,7 +28,7 @@ with airflow.DAG(
         default_args=args
 ) as dag:
     ############################################################
-    # Service dummpy operators
+    # Service dummy operators
     starter = DummyOperator(
         task_id='launcher',
         retries=3,
@@ -42,13 +42,13 @@ with airflow.DAG(
     )
 
     receive_response = DummyOperator(
-        task_id='receive_response',
+        task_id='receive-response',
         trigger_rule='all_success',
         dag=dag
     )
     ############################################################
 
-    python_operator = PythonOperator(
+    py_greeting = PythonOperator(
         task_id='python-greetings',
         python_callable=dummy_python_operator,
         dag=dag
@@ -66,4 +66,4 @@ with airflow.DAG(
         dag=dag
     )
 
-    finisher << show_files << receive_response << launch_shellscript << starter >> python_operator >> receive_response >> finisher
+    finisher << show_files << receive_response << launch_shellscript << starter >> py_greeting >> receive_response >> finisher
