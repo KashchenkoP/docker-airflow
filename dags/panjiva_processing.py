@@ -23,11 +23,10 @@ def dummy_python_operator(ds, **kwards):
 
 
 with airflow.DAG(
-    dag_id='tiny-dag',
-    schedule_interval="@once",
-    default_args=args
+        dag_id='panjiva-processing',
+        schedule_interval="@once",
+        default_args=args
 ) as dag:
-
     ############################################################
     # Service dummpy operators
     starter = DummyOperator(
@@ -41,24 +40,30 @@ with airflow.DAG(
         trigger_rule='all_success',
         dag=dag
     )
-    
+
     receive_response = DummyOperator(
         task_id='receive_response',
         trigger_rule='all_success',
         dag=dag
     )
     ############################################################
-    
+
     python_operator = PythonOperator(
         task_id='python-greetings',
         python_callable=dummy_python_operator,
         dag=dag
     )
 
-    bash_operator = BashOperator(
+    launch_shellscript = BashOperator(
         task_id='bash-greetings',
-        bash_command='echo "Hello from bashistic world!"',
+        bash_command='${AIRFLOW_HOME}/dags/parsing-scripts/dummy.sh ',
         dag=dag
     )
 
-    starter >> python_operator >> receive_response >> finisher << receive_response << bash_operator
+    show_files = BashOperator(
+        task_id='show-files',
+        bash_command='ls -a ${AIRFLOW_HOME}/dags/parsing-scripts/',
+        dag=dag
+    )
+
+    finisher << show_files << receive_response << launch_shellscript << starter >> python_operator >> receive_response >> finisher
