@@ -48,22 +48,23 @@ with airflow.DAG(
     )
     ############################################################
 
-    py_greeting = PythonOperator(
-        task_id='python-greetings',
-        python_callable=dummy_python_operator,
+    download_import_data = BashOperator(
+        task_id='download-panjiva-import-data',
+        bash_command='${AIRFLOW_HOME}/dags/downloader-scripts/download-import-data.sh ',
         dag=dag
     )
 
-    launch_shellscript = BashOperator(
-        task_id='bash-greetings',
-        bash_command='${AIRFLOW_HOME}/dags/parsing-scripts/dummy.sh ',
+    download_export_data = BashOperator(
+        task_id='download-panjiva-export-data',
+        bash_command='${AIRFLOW_HOME}/dags/downloader-scripts/download-export-data.sh ',
         dag=dag
     )
 
     show_files = BashOperator(
         task_id='show-files',
-        bash_command='ls -a ${AIRFLOW_HOME}/dags/parsing-scripts/',
+        bash_command='ls -a ${AIRFLOW_HOME}',
         dag=dag
     )
 
-    finisher << show_files << receive_response << launch_shellscript << starter >> py_greeting >> receive_response >> finisher
+    starter >> download_export_data >> receive_response >> show_files >> finisher
+    starter >> download_import_data >> receive_response >> show_files >> finisher
