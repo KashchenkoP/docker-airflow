@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # User-provided configuration must always be respected.
-#
+export PYTHONIOENCODING=utf8
 # Therefore, this script must only derives Airflow AIRFLOW__ variables from other variables
 # when the user did not provide their own configuration.
 
