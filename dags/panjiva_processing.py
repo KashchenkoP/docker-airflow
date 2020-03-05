@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.bash_operator import BashOperator
+from airflow.operators.hive_operator import HiveOperator
+
 from airflow.contrib.operators.ssh_operator import SSHOperator
 from airflow.contrib.hooks.ssh_hook import SSHHook
 
@@ -48,6 +50,12 @@ with airflow.DAG(
         dag=dag
     )
 
+    wait_uploading = DummyOperator(
+        task_id='hive-uploading-barrier',
+        trigger_rule='all_success',
+        dag=dag
+    )
+
     export_barrier = DummyOperator(
         task_id='export-downloading-barrier',
         trigger_rule='all_success',
@@ -86,21 +94,32 @@ with airflow.DAG(
         dag=dag
     )
 
-    hive_deploy = SSHOperator(
-        task_id='deploy-to-hive',
+    starter >> download_export_data >> export_barrier >> parse_and_put
+    starter >> download_import_data >> import_barrier >> parse_and_put
+
+    upload_exp_data = SSHOperator(
+        task_id='upload-export-data-to-hive',
         remote_host='10.1.25.37',
         ssh_hook=hadoop_hook,
         command=u'echo $HOSTNAME',
         dag=dag
     )
 
-    show_files = BashOperator(
-        task_id='show-files',
-        bash_command='ls -a ${AIRFLOW_HOME}',
+    upload_imp_data = SSHOperator(
+        task_id='upload-import-data-to-hive',
+        remote_host='10.1.25.37',
+        ssh_hook=hadoop_hook,
+        command=u'echo $HOSTNAME',
         dag=dag
     )
 
-    starter >> download_export_data >> export_barrier >> parse_and_put
-    starter >> download_import_data >> import_barrier >> parse_and_put
+    parse_and_put >> wait_unzipping >> upload_exp_data >> wait_uploading
+    parse_and_put >> wait_unzipping >> upload_imp_data >> wait_uploading
 
-    parse_and_put >> wait_unzipping >> hive_deploy >> show_files >> finisher
+    companies_info = HiveOperator(
+        task_id='united-companies-table',
+        hql='${AIRFLOW_HOME}/sql/companies_info.sql ',
+        hive_cli_conn_id='hive'
+    )
+
+    wait_uploading >> finisher
