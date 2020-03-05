@@ -42,8 +42,20 @@ with airflow.DAG(
         dag=dag
     )
 
-    receive_response = DummyOperator(
-        task_id='receive-response',
+    wait_unzipping = DummyOperator(
+        task_id='local-achieves-barrier',
+        trigger_rule='all_success',
+        dag=dag
+    )
+
+    export_barrier = DummyOperator(
+        task_id='export-downloading-barrier',
+        trigger_rule='all_success',
+        dag=dag
+    )
+
+    import_barrier = DummyOperator(
+        task_id='import-downloading-barrier',
         trigger_rule='all_success',
         dag=dag
     )
@@ -51,7 +63,7 @@ with airflow.DAG(
     hadoop_hook = SSHHook(
         remote_host='10.1.25.37',
         username='kashchenko',
-        password='Gee9lohphiey',
+        password='pwd',
         timeout=30
     )
     ############################################################
@@ -74,7 +86,7 @@ with airflow.DAG(
         dag=dag
     )
 
-    launch_remote = SSHOperator(
+    hive_deploy = SSHOperator(
         task_id='deploy-to-hive',
         remote_host='10.1.25.37',
         ssh_hook=hadoop_hook,
@@ -88,5 +100,7 @@ with airflow.DAG(
         dag=dag
     )
 
-    starter >> download_export_data >> receive_response >> launch_remote >> parse_and_put >> show_files >> finisher
-    starter >> download_import_data >> receive_response >> launch_remote >> parse_and_put >> show_files >> finisher
+    starter >> download_export_data >> export_barrier >> parse_and_put
+    starter >> download_import_data >> import_barrier >> parse_and_put
+
+    parse_and_put >> wait_unzipping >> hive_deploy >> show_files >> finisher
