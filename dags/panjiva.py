@@ -5,6 +5,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.hive_operator import HiveOperator
 
+
 from airflow.contrib.operators.ssh_operator import SSHOperator
 from airflow.contrib.hooks.ssh_hook import SSHHook
 
@@ -70,7 +71,7 @@ with airflow.DAG(
     hadoop_hook = SSHHook(
         remote_host='10.1.25.37',
         username='kashchenko',
-        password='pwd',
+        password='Gee9lohphiey',
         timeout=30
     )
     ############################################################

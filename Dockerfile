@@ -18,6 +18,15 @@ ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
 
+#
+ARG HADOOP_DISTRO="cdh"
+ARG HADOOP_MAJOR="5"
+ARG HADOOP_DISTRO_VERSION="5.11.0"
+ARG HADOOP_VERSION="2.6.0"
+ARG HADOOP_URL="https://archive.cloudera.com/${HADOOP_DISTRO}${HADOOP_MAJOR}/${HADOOP_DISTRO}/${HADOOP_MAJOR}/"
+ARG HADOOP_DOWNLOAD_URL="${HADOOP_URL}hadoop-${HADOOP_VERSION}-${HADOOP_DISTRO}${HADOOP_DISTRO_VERSION}.tar.gz"
+ARG HADOOP_TMP_FILE="/tmp/hadoop.tar.gz"
+
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -25,8 +34,9 @@ ENV LC_ALL en_US.UTF-8
 ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
 
-# Disable noisy "Handling signal" log messages:
-# ENV GUNICORN_CMD_ARGS --log-level WARNING
+# Install Hadoop and Hive
+# It is done in one step to share variables.
+ENV HADOOP_HOME="/opt/hadoop-cdh" HIVE_HOME="/opt/hive"
 
 RUN set -ex \
     && buildDeps=' \
@@ -50,6 +60,26 @@ RUN set -ex \
         rsync \
         netcat \
         locales \
+    && mkdir -pv "${HADOOP_HOME}" \
+    && curl --fail --location "${HADOOP_DOWNLOAD_URL}" --output "${HADOOP_TMP_FILE}" \
+    && tar xzf "${HADOOP_TMP_FILE}" --absolute-names --strip-components 1 -C "${HADOOP_HOME}" \
+    && rm "${HADOOP_TMP_FILE}" \
+    && echo "Installing Hive" \
+    && HIVE_VERSION="1.1.0" \
+    && HIVE_URL="${HADOOP_URL}hive-${HIVE_VERSION}-${HADOOP_DISTRO}${HADOOP_DISTRO_VERSION}.tar.gz" \
+    && HIVE_VERSION="1.1.0" \
+    && HIVE_TMP_FILE="/tmp/hive.tar.gz" \
+    && mkdir -pv "${HIVE_HOME}" \
+    && mkdir -pv "/user/hive/warehouse" \
+    && chmod -R 777 "${HIVE_HOME}" \
+    && chmod -R 777 "/user/" \
+    && curl --fail --location  "${HIVE_URL}" --output "${HIVE_TMP_FILE}" \
+    && tar xzf "${HIVE_TMP_FILE}" --strip-components 1 -C "${HIVE_HOME}" \
+    && cd & rm "${HIVE_TMP_FILE}" \
+
+# Disable noisy "Handling signal" log messages:
+# ENV GUNICORN_CMD_S --log-level WARNING
+
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
@@ -77,6 +107,9 @@ COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY dags ${AIRFLOW_HOME}/dags
 COPY sql ${AIRFLOW_HOME}/sql
+COPY jars ${AIRFLOW_HOME}/jars
+
+ENV PATH="${PATH}:/opt/hive/bin"
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 
