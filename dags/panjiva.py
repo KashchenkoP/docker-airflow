@@ -71,7 +71,7 @@ with airflow.DAG(
     hadoop_hook = SSHHook(
         remote_host='10.1.25.37',
         username='kashchenko',
-        password='Gee9lohphiey',
+        password='pwd',
         timeout=30
     )
     ############################################################
