@@ -39,7 +39,7 @@ ENV LC_MESSAGES en_US.UTF-8
 ENV HADOOP_HOME="/opt/hadoop-cdh" HIVE_HOME="/opt/hive"
 
 RUN set -ex \
-    && buildDeps=' \
+RUN buildDeps=' \
         freetds-dev \
         libkrb5-dev \
         libsasl2-dev \
@@ -48,9 +48,9 @@ RUN set -ex \
         libpq-dev \
         git \
     ' \
-    && apt-get update -yqq \
-    && apt-get upgrade -yqq \
-    && apt-get install -yqq --no-install-recommends \
+RUN apt-get update -yqq
+RUN apt-get upgrade -yqq
+RUN apt-get install -yqq --no-install-recommends \
         $buildDeps \
         freetds-bin \
         build-essential \
@@ -59,43 +59,43 @@ RUN set -ex \
         curl \
         rsync \
         netcat \
-        locales \
-    && mkdir -pv "${HADOOP_HOME}" \
-    && curl --fail --location "${HADOOP_DOWNLOAD_URL}" --output "${HADOOP_TMP_FILE}" \
-    && tar xzf "${HADOOP_TMP_FILE}" --absolute-names --strip-components 1 -C "${HADOOP_HOME}" \
-    && rm "${HADOOP_TMP_FILE}" \
-    && echo "Installing Hive" \
-    && HIVE_VERSION="1.1.0" \
-    && HIVE_URL="${HADOOP_URL}hive-${HIVE_VERSION}-${HADOOP_DISTRO}${HADOOP_DISTRO_VERSION}.tar.gz" \
-    && HIVE_VERSION="1.1.0" \
-    && HIVE_TMP_FILE="/tmp/hive.tar.gz" \
-    && mkdir -pv "${HIVE_HOME}" \
-    && mkdir -pv "/user/hive/warehouse" \
-    && chmod -R 777 "${HIVE_HOME}" \
-    && chmod -R 777 "/user/" \
-    && curl --fail --location  "${HIVE_URL}" --output "${HIVE_TMP_FILE}" \
-    && tar xzf "${HIVE_TMP_FILE}" --strip-components 1 -C "${HIVE_HOME}" \
-    && cd & rm "${HIVE_TMP_FILE}" \
+        locales  \
+RUN mkdir -pv "${HADOOP_HOME}"
+RUN curl --fail --location "${HADOOP_DOWNLOAD_URL}" --output "${HADOOP_TMP_FILE}"
+RUN tar xzf "${HADOOP_TMP_FILE}" --absolute-names --strip-components 1 -C "${HADOOP_HOME}"
+RUN rm "${HADOOP_TMP_FILE}"
+RUN echo "Installing Hive"
+RUN HIVE_VERSION="1.1.0"
+RUN HIVE_URL="${HADOOP_URL}hive-${HIVE_VERSION}-${HADOOP_DISTRO}${HADOOP_DISTRO_VERSION}.tar.gz"
+RUN HIVE_VERSION="1.1.0"
+RUN HIVE_TMP_FILE="/tmp/hive.tar.gz"
+RUN mkdir -pv "${HIVE_HOME}"
+RUN mkdir -pv "/user/hive/warehouse"
+RUN chmod -R 777 "${HIVE_HOME}"
+RUN chmod -R 777 "/user/"
+RUN curl --fail --location  "${HIVE_URL}" --output "${HIVE_TMP_FILE}"
+RUN tar xzf "${HIVE_TMP_FILE}" --strip-components 1 -C "${HIVE_HOME}"
+RUN cd & rm "${HIVE_TMP_FILE}"
 
 # Disable noisy "Handling signal" log messages:
 # ENV GUNICORN_CMD_S --log-level WARNING
 
-    && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
-    && locale-gen \
-    && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
-    && useradd -ms /bin/bash -d ${AIRFLOW_USER_HOME} airflow \
-    && pip install -U pip setuptools wheel \
-    && pip install pytz \
-    && pip install pyOpenSSL \
-    && pip install ndg-httpsclient \
-    && pip install pyasn1 \
-    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
-    && pip install 'redis==3.2' \
-    && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
-    && apt-get purge --auto-remove -yqq $buildDeps \
-    && apt-get autoremove -yqq --purge \
-    && apt-get clean \
-    && rm -rf \
+RUN sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen
+RUN locale-gen
+RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+RUN useradd -ms /bin/bash -d ${AIRFLOW_USER_HOME} airflow
+RUN pip install -U pip setuptools wheel
+RUN pip install pytz
+RUN pip install pyOpenSSL
+RUN pip install ndg-httpsclient
+RUN pip install pyasn1
+RUN pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION}
+RUN pip install 'redis==3.2'
+RUN if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi
+RUN apt-get purge --auto-remove -yqq $buildDeps
+RUN apt-get autoremove -yqq --purge
+RUN apt-get clean
+RUN rm -rf \
         /var/lib/apt/lists/* \
         /tmp/* \
         /var/tmp/* \
