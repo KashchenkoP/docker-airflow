@@ -82,6 +82,7 @@ COPY sql ${AIRFLOW_HOME}/sql
 # It is done in one step to share variables.
 ENV HADOOP_HOME="/opt/hadoop-cdh" HIVE_HOME="/opt/hive"
 
+
 RUN HADOOP_DISTRO="cdh" \
     && HADOOP_MAJOR="5" \
     && HADOOP_DISTRO_VERSION="5.11.0" \
@@ -107,6 +108,21 @@ RUN HADOOP_DISTRO="cdh" \
     && rm "${HIVE_TMP_FILE}"
 
 ENV PATH "${PATH}:/opt/hive/bin"
+
+
+# Install Java SDK
+RUN echo "deb http://security.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
+RUN mkdir -p /usr/share/man/man1 && \
+    apt-get update -y && \
+    apt-get install -y openjdk-8-jdk
+
+RUN apt-get install unzip -y && \
+    apt-get autoremove -y
+
+# Setup JAVA_HOME -- useful for docker commandline
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+RUN export JAVA_HOME
+
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 

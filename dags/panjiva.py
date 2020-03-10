@@ -68,6 +68,18 @@ with airflow.DAG(
         dag=dag
     )
 
+    sql_barrier = DummyOperator(
+        task_id='construct-historical-tables-barrier',
+        trigger_rule='all_success',
+        dag=dag
+    )
+
+    aggregated_stats_barrier = DummyOperator(
+        task_id='construct-aggregated-tables-barrier',
+        trigger_rule='all_success',
+        dag=dag
+    )
+
     hadoop_hook = SSHHook(
         remote_host='10.1.25.37',
         username='kashchenko',
@@ -143,9 +155,42 @@ with airflow.DAG(
 
     companies_info = HiveOperator(
         task_id='united-companies-table',
-        #hql='${AIRFLOW_HOME}/sql/companies_info.sql ',
-        hql='select * from companies_info',
+        # hql='${AIRFLOW_HOME}/sql/companies_info.sql ',
+        hql='show tables',
         hive_cli_conn_id='hive'
     )
 
-    wait_uploading >> finisher
+    consignments_info = HiveOperator(
+        task_id='separate-consignments-table',
+        # hql='${AIRFLOW_HOME}/sql/consignments.sql ',
+        hql='show tables',
+        hive_cli_conn_id='hive'
+    )
+
+    wait_uploading >> companies_info >> consignments_info >> sql_barrier
+
+    hscodes_stats = HiveOperator(
+        task_id='hscodes-stats-table',
+        # hql='${AIRFLOW_HOME}/sql/import_stats_by_hscodes.sql ',
+        hql='show tables',
+        hive_cli_conn_id='hive'
+    )
+
+    companies_hscodes_stats = HiveOperator(
+        task_id='hscodes-companies-stats-table',
+        # hql='${AIRFLOW_HOME}/sql/import_stats_by_companies_hscodes.sql ',
+        hql='show tables',
+        hive_cli_conn_id='hive'
+    )
+
+    sql_barrier >> hscodes_stats >> aggregated_stats_barrier
+    sql_barrier >> companies_hscodes_stats >> aggregated_stats_barrier
+
+    dm_companies = HiveOperator(
+        task_id='dm-toplevel-companies-search-table',
+        # hql='${AIRFLOW_HOME}/sql/dm_toplevel_companies_search.sql ',
+        hql='show tables',
+        hive_cli_conn_id='hive'
+    )
+
+    aggregated_stats_barrier >> dm_companies >> finisher
