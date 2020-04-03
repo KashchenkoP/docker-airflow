@@ -73,10 +73,20 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-COPY script/entrypoint.sh /entrypoint.sh
-COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
-COPY dags ${AIRFLOW_HOME}/dags
-COPY sql ${AIRFLOW_HOME}/sql
+
+RUN echo "deb http://security.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
+RUN mkdir -p /usr/share/man/man1 && \
+    apt-get update -y && \
+    apt-get install -y openjdk-8-jdk
+
+RUN apt-get install unzip -y && \
+    apt-get autoremove -y
+
+# Setup JAVA_HOME -- useful for docker commandline
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+RUN export JAVA_HOME
+
+
 
 # Install Hadoop and Hive
 # It is done in one step to share variables.
@@ -109,20 +119,10 @@ RUN HADOOP_DISTRO="cdh" \
 
 ENV PATH "${PATH}:/opt/hive/bin"
 
-
-# Install Java SDK
-RUN echo "deb http://security.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
-RUN mkdir -p /usr/share/man/man1 && \
-    apt-get update -y && \
-    apt-get install -y openjdk-8-jdk
-
-RUN apt-get install unzip -y && \
-    apt-get autoremove -y
-
-# Setup JAVA_HOME -- useful for docker commandline
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
-RUN export JAVA_HOME
-
+COPY script/entrypoint.sh /entrypoint.sh
+COPY config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
+COPY dags ${AIRFLOW_HOME}/dags
+COPY sql ${AIRFLOW_HOME}/sql
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 

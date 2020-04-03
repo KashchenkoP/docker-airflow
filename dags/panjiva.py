@@ -1,4 +1,5 @@
 import airflow
+import psycopg2
 from datetime import datetime
 
 from airflow.operators.dummy_operator import DummyOperator
