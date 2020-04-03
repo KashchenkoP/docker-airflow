@@ -45,7 +45,6 @@ with airflow.DAG(
 
     hadoop_hook = SSHHook(
         remote_host='10.1.25.37',
-        port=9191,
         username='kashchenko',
         password='Gee9lohphiey',
         timeout=30
@@ -55,7 +54,7 @@ with airflow.DAG(
         task_id='download_rec_tovar_to_hive',
         remote_host='10.1.25.37',
         ssh_hook=hadoop_hook,
-        command=u'./home/kashchenko/fts-handler/run-parser.sh ',
+        command=u'/home/kashchenko/fts-handler/run-parser.sh ',
         dag = dag
     )
 
